@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 /**
  *  A 'weekly' provider, or 'hints' is designed to prompt the
@@ -17,45 +17,51 @@
  *  inserted into the sidebar of the "add report" page.
  *
  **/
-
-class JIRAHints {
-    private $jira_api_url, $jira_url;
+class JIRAHints
+{
+    private $jira_api_url, $jira_url, $jira_project;
     private $events_from, $events_to;
     private $username;
 
     private $jira_context;
 
-    public function __construct($username, $config, $events_from, $events_to) {
+    public function __construct($username, $config, $events_from, $events_to)
+    {
         $this->username = $username;
         $this->events_from = $events_from;
         $this->events_to = $events_to;
         $this->jira_api_url = $config['jira_api_url'];
         $this->jira_url = $config['jira_url'];
+        $this->jira_project = $config['jira_project'];
+
 
         $this->jira_context = stream_context_create(array(
             'http' => array(
-                'header'  => "Authorization: Basic " . base64_encode("{$config['username']}:{$config['password']}")
+                'header' => "Authorization: Basic " . base64_encode("{$config['username']}:{$config['password']}")
             )
         ));
 
     }
 
-    public function printHints() {
+    public function printHints()
+    {
         return $this->printJIRAForPeriod();
     }
 
-    public function getJIRALastPeriod($days) {
-        $user = strtolower($this->username);
-        $search = rawurlencode("assignee = {$user} AND updated >= -{$days}days AND Status != New ORDER BY updated DESC, key DESC");
+    public function getJIRALastPeriod($days)
+    {
+        $project = strtoupper($this->jira_project);
+        $search = rawurlencode("project = {$project} AND updated >= -{$days}days AND Status != New ORDER BY updated DESC, key DESC");
         $json = file_get_contents("{$this->jira_api_url}/search?jql={$search}", false, $this->jira_context);
         $decoded = json_decode($json);
 
         return $decoded;
     }
 
-    public function getJIRAForPeriod($start, $end) {
-        $user = strtolower($this->username);
-        $search = "assignee = {$user} AND updated >= {$start} AND updated <= {$end} AND Status != New ORDER BY updated DESC, key DESC";
+    public function getJIRAForPeriod($start, $end)
+    {
+        $project = strtoupper($this->jira_project);
+        $search = "project = {$project} AND updated >= {$start} AND updated <= {$end} AND Status != New ORDER BY updated DESC, key DESC";
         $search = rawurlencode($search);
         $json = file_get_contents("{$this->jira_api_url}/search?jql={$search}", false, $this->jira_context);
         $decoded = json_decode($json);
@@ -63,12 +69,13 @@ class JIRAHints {
         return $decoded;
     }
 
-    public function printJIRALast7Days() {
+    public function printJIRALast7Days()
+    {
         $tickets = $this->getJIRALastPeriod(7);
         if ($tickets->total > 0) {
             $html = "<ul>";
             foreach ($tickets->issues as $issue) {
-                $html .= '<li><a href="' . $this->jira_url . '/browse/' . $issue->key. '" target="_blank">';
+                $html .= '<li><a href="' . $this->jira_url . '/browse/' . $issue->key . '" target="_blank">';
                 $html .= "{$issue->key}</a> - {$issue->fields->summary} ({$issue->fields->status->name})</li>";
             }
             $html .= "</ul>";
@@ -80,7 +87,8 @@ class JIRAHints {
 
     }
 
-    public function printJIRAForPeriod() {
+    public function printJIRAForPeriod()
+    {
         // JIRA wants milliseconds instead of seconds since epoch
         $range_start = $this->events_from * 1000;
         $range_end = $this->events_to * 1000;
@@ -89,7 +97,7 @@ class JIRAHints {
         if ($tickets->total > 0) {
             $html = "<ul>";
             foreach ($tickets->issues as $issue) {
-                $html .= '<li><a href="' . $this->jira_url . '/browse/' . $issue->key. '" target="_blank">';
+                $html .= '<li><a href="' . $this->jira_url . '/browse/' . $issue->key . '" target="_blank">';
                 $html .= "{$issue->key}</a> - {$issue->fields->summary} ({$issue->fields->status->name})</li>";
             }
             $html .= "</ul>";
@@ -102,8 +110,6 @@ class JIRAHints {
     }
 
 }
-
-
 
 
 ?>
