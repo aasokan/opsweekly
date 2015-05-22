@@ -51,7 +51,7 @@ class JIRAHints
     public function getJIRALastPeriod($days)
     {
         $project = strtoupper($this->jira_project);
-        $search = rawurlencode("project = {$project} AND updated >= -{$days}days AND Status != New ORDER BY updated DESC, key DESC");
+        $search = rawurlencode("project = {$project} AND updated >= -{$days}days AND Status != Closed ORDER BY updated DESC, key DESC");
         $json = file_get_contents("{$this->jira_api_url}/search?jql={$search}", false, $this->jira_context);
         $decoded = json_decode($json);
 
@@ -61,7 +61,7 @@ class JIRAHints
     public function getJIRAForPeriod($start, $end)
     {
         $project = strtoupper($this->jira_project);
-        $search = "project = {$project} AND updated >= {$start} AND updated <= {$end} AND Status != New ORDER BY updated DESC, key DESC";
+        $search = "project = {$project} AND updated >= {$start} AND updated <= {$end} AND Status != Closed ORDER BY updated DESC, key DESC";
         $search = rawurlencode($search);
         $json = file_get_contents("{$this->jira_api_url}/search?jql={$search}", false, $this->jira_context);
         $decoded = json_decode($json);
